@@ -4,7 +4,7 @@
 
 ### Generelle API-Design-Guidelines
 
-- JSON-Keys: CamelCase, ausgeschriebene Wörter (nicht abgekürzt)
+- JSON-Keys: lowerCamelCase, ausgeschriebene Wörter (nicht abgekürzt)
 - an Schema.org orientieren?
 - Unabhängigkeit von TEI-XML
 - Wenn Wert nicht vorhanden, null statt Weglassen des JSON-Keys. D.h.
