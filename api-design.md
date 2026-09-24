@@ -1,8 +1,64 @@
 # Design Arendt-API
 
+## Generelles
+
+### Generelle API-Design-Guidelines
+
+- JSON-Keys: CamelCase, ausgeschriebene Wörter (nicht abgekürzt)
+- an Schema.org orientieren?
+- Unabhängigkeit von TEI-XML
+- Wenn Wert nicht vorhanden, null statt Weglassen des JSON-Keys. D.h.
+  alle JSONs haben dieselbe Anzahl von Keys (was ist bei Arrays, leer oder null?)
+
+### Verlinkung
+
+- Hypermedia-API geplant? HAL oder anderes System?
+- JSON-LD hier eine Lösung?
+- Pagination geplant? Jetzt schon "total"-Key einbauen
+
+### Separate Endpoints vs. Content Negotation
+
+- JSON für TEI-XML nicht sehr sinnvoll
+- Content Negotiation alleine hat Nachteile, nicht per E-Mail zu versenden etc.
+- Muss aber vorhanden sein, weil Content Negotiation für den gesamten Endpunkt
+  gelten muss.
+- Deshalb ganz anderer Vorschlag: unterschiedliche Endpunkte, weil es sich doch
+  um unterschiedliche Ressourcen handelt:
+  - /texts/resources/ae1254820 -> JSON oder JSON und XML
+  - /texts/resources/ae1254820/tei -> nur XML
+  - /texts/resources/ae1254820/plain -> nur text/plain
+- Dann evtl. im Sinne von Hypermedia-API:
+  ```json
+  {
+    "links": {
+      "self": "/api/v0/texts/resources/ae1254820",
+      "tei": "/api/v0/texts/resources/ae1254820/tei",
+      "plain": "/api/v0/texts/resources/ae1254820/plain"
+    }
+  }
+  ```
+
+### SwaggerUI
+
+- title-Tag immer noch "API Documentation"
+- Description of Param nicht benutzerfreundlich, besser Beispiel: ID of a person (pattern: ^ae\d{7}$)
+- Es fehlt eine Schemas-Sektion. Durch sie könnte man vor allem klarer dokumentieren,
+welche möglichen Werte es für einen bestimmten Key gibt, z.B. für Persons in der person-list.
+- Wegen Performance-Problemen bei SwaggerUI bei großen XML-Dateien syntaxHighlight ausstellen:
+  ```js
+	const defaultOptions = {
+		displayOperationId: true,
+		displayRequestDuration: true,
+		showExtensions: true,
+		withCredentials: true,
+		syntaxHighlight: false
+	}
+  ```
+
+
 ## Person-API
 
-### Person-API
+### Status quo
 - *TEI-XML Persons? Wo werden die verwaltet? Sind sie die tatsächliche Quelle?*
 - alle Details können in die Liste, im Moment bei 700 Einträgen 16KB gzipped!
 - Reihenfolge der Keys ist in Liste und Detail unterschiedlich.
@@ -17,7 +73,7 @@
 - type: "person" — null, "fictitious", "mythological", "biblical", "deity"
 - type: "personGrp" — "siblings", "family", "spouses", "dynasty"
 
-- Alternative:
+### Alternative
   ```json
   [
     { "type": "person",      "status": "historical",   "groupType": null },
@@ -43,7 +99,7 @@
   geht offenbar auch auf demselben Element)
 - weshalb? Jahres oder Monatsangaben, oder Ausdrücken von Unsicherheit (ca.-Werte)
 
-Gesamt-Vorschlag:
+### Gesamt-Vorschlag
 ```json
 {
   "id": "ae6870711",
@@ -78,72 +134,23 @@ Gesamt-Vorschlag:
 }
 ```
 
-## API generell / Content Negotation
-
-- Hypermedia-API geplant?
-- Pagination geplant? Jetzt schon "total"-Key einbauen
-- JSON für TEI-XML nicht sehr sinnvoll
-- Content Negotiation alleine hat Nachteile, nicht per E-Mail zu versenden etc.
-- Muss aber vorhanden sein, weil Content Negotiation für den gesamten Endpunkt
-  gelten muss.
-- Deshalb ganz anderer Vorschlag: unterschiedliche Endpunkte, weil es sich doch
-  um unterschiedliche Ressourcen handelt:
-  - /texts/resources/ae1254820 -> JSON oder JSON und XML
-  - /texts/resources/ae1254820/tei -> nur XML
-  - /texts/resources/ae1254820/plain -> nur text/plain
-- Dann evtl. im Sinne von Hypermedia-API:
-  ```json
-  {
-    "links": {
-      "self": "/api/v0/texts/resources/ae1254820",
-      "tei": "/api/v0/texts/resources/ae1254820/tei",
-      "plain": "/api/v0/texts/resources/ae1254820/plain"
-    }
-  }
-  ```
-
-## SwaggerUI
-
-- title-Tag immer noch "API Documentation"
-- Description of Param nicht benutzerfreundlich, besser Beispiel: ID of a person (pattern: ^ae\d{7}$)
-- Es fehlt eine Schemas-Sektion. Durch sie könnte man vor allem klarer dokumentieren,
-welche möglichen Werte es für einen bestimmten Key gibt, z.B. für Persons in der person-list.
-- Wegen Performance-Problemen bei SwaggerUI bei großen XML-Dateien syntaxHighlight ausstellen:
-  ```js
-	const defaultOptions = {
-		displayOperationId: true,
-		displayRequestDuration: true,
-		showExtensions: true,
-		withCredentials: true,
-		syntaxHighlight: false
-	}
-  ```
 
 
 ## Resource-API
 
-### Generelle API-Design-Guidelines
 
-- JSON-Keys: CamelCase, ausgeschriebene Wörter (nicht abgekürzt)
-- an Schema.org orientieren?
-- Unabhängigkeit von TEI-XML
-- Wenn Wert nicht vorhanden, null statt Weglassen des JSON-Keys. D.h.
-  alle JSONs haben dieselbe Anzahl von Keys (was ist bei Arrays, leer oder null?)
-
-### Vorschläge für Resource-JSONs
-
-#### Sprache auszeichnen
+### Sprache auszeichnen
 - Sofort: language (String) oder languages (Array)
 - Später: otherLanguages (Array)
 - Format: BCP 47 wie in TEI-XML
 
-#### Eine Sprache offenbar falsch kodiert
+### Eine Sprache offenbar falsch kodiert
 - [BCP47 language subtag lookup](https://r12a.github.io/app-subtags/)
 - grc-la -> Altgriechisch, wie in Laos verwendet
 - grc-Latn -> Altgriechisch in lateinischer Schrift
 - -> überall falsch kodiert, wo es angewendet wird. 44 Dateien insgesamt.
 
-#### Versions / Beispiel Ideologie und Terror
+### Versions / Beispiel Ideologie und Terror
 
 - offenbar im Moment nur einmal verwendet, bei Ideologie und Terror Typoskript (ae3016015)
 - Ids: "ae3016015_l" und "ae3016015_s" inkonsistent, andere Lösung finden
@@ -157,7 +164,7 @@ welche möglichen Werte es für einen bestimmten Key gibt, z.B. für Persons in 
     - ae8560990 -> Ideology and Terror (Band 6, Seiten I-J) -> falsche Seitenangaben!
 
 
-#### Type
+### Type
 - im Moment: type: editorial oder source.print, source.typescript -> wieder Vermischung
   von zwei verschiedenen Sachen
 - ist hier gemeint: type: primary/editorial
@@ -165,7 +172,7 @@ welche möglichen Werte es für einen bestimmten Key gibt, z.B. für Persons in 
 - unter source stehen zwei verschiedene Sätze von JSON-Keys, je nachdem ob es
   source.print oder source.typescript ist, bei editorial steht null
 
-#### Vorschläge:
+### Vorschläge:
 
 Auszüge...
 
@@ -222,13 +229,13 @@ und
 
 ```
 
-#### Typ der Ressource auszeichnen -> noch unklar
+### Typ der Ressource auszeichnen -> noch unklar
 
 - Welchen Typ beschreibt das JSON-Dokument, z.B. Werk, Textversion, vielleicht nach diesem
   WEMI-System?
 - Ich weiß nicht, auf welcher Ebene ich mich gerade befinde.
 
-#### Neue Entität "work"?
+### Neue Entität "work"?
 
 - Überlegen, ob man übergreifende Werk-Kategorie einführt, die man mit Normdaten (GND-Id,
   Wikidata-Id) besser verknüpfen kann.
